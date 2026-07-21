@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Siddho CRM | Client Email Outreach & Gmail Dashboard</title>
+  <meta name="description" content="Send personalized client pitch emails via Gmail using Google Apps Script backend and Google Sheets logging.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toast-msg">Email sent successfully via Gmail!</span>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="brand-info">
+          <span class="brand-name">Siddho<span>Mail</span></span>
+          <small>Outreach & Gmail API</small>
+        </div>
+      </div>
+
+      <div class="backend-status" id="backend-status-card" onclick="openConfigModal()">
+        <div class="status-indicator">
+          <i class="fa-solid fa-circle status-dot" id="api-status-dot"></i>
+        </div>
+        <div class="status-text">
+          <strong id="api-status-title">Backend Connected</strong>
+          <small id="api-status-desc">Google Apps Script Ready</small>
+        </div>
+        <i class="fa-solid fa-gear gear-icon"></i>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-label">OUTREACH SUITE</div>
+        <button class="nav-item active" data-tab="compose"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Quick Compose</button>
+        <button class="nav-item" data-tab="templates"><i class="fa-solid fa-file-code"></i> Pitch Templates <span class="badge">4</span></button>
+        <button class="nav-item" data-tab="logs"><i class="fa-solid fa-clock-rotate-left"></i> Sent History & Logs</button>
+        <button class="nav-item" data-tab="setup"><i class="fa-solid fa-book-open"></i> Backend Setup Guide</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="../siddho-crm-website/index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Siddho CRM</a>
+        <div class="stats-mini">
+          <div><span>Emails Sent Today</span> <strong id="sidebar-sent-count">0</strong></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- Top Header -->
+      <header class="top-bar">
+        <div class="bar-left">
+          <button class="mobile-toggle" id="mobile-toggle"><i class="fa-solid fa-bars"></i></button>
+          <div>
+            <h1 id="page-title">Client Email Outreach Studio</h1>
+            <p id="page-subtitle">Personalize and dispatch custom software proposals directly from your official Gmail account.</p>
+          </div>
+        </div>
+        <div class="bar-right">
+          <button class="btn-secondary" onclick="openConfigModal()"><i class="fa-solid fa-link"></i> Configure Backend URL</button>
+        </div>
+      </header>
+
+      <!-- TAB 1: COMPOSE & PREVIEW -->
+      <section class="tab-pane active" id="tab-compose">
+        
+        <!-- Stats Row -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon bg-blue"><i class="fa-solid fa-paper-plane"></i></div>
+            <div>
+              <span class="stat-label">Total Sent via Gmail</span>
+              <strong class="stat-val" id="stat-total-sent">12</strong>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-green"><i class="fa-solid fa-check-double"></i></div>
+            <div>
+              <span class="stat-label">Delivery Status</span>
+              <strong class="stat-val" style="color:var(--green);">100% Sent</strong>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-purple"><i class="fa-solid fa-layer-group"></i></div>
+            <div>
+              <span class="stat-label">Active Pitch Templates</span>
+              <strong class="stat-val">4 Templates</strong>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon bg-amber"><i class="fa-solid fa-table"></i></div>
+            <div>
+              <span class="stat-label">Google Sheet Logging</span>
+              <strong class="stat-val" id="stat-sheet-status" style="font-size:1.1rem;color:var(--amber);">Enabled</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compose Workspace -->
+        <div class="compose-grid">
+          
+          <!-- Left: Client Info & Template Selector -->
+          <div class="compose-form-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-user-tie"></i> 1. Enter Client Details</h3>
+              <button class="btn-clear" onclick="clearForm()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+            </div>
+            
+            <div class="form-body">
+              <div class="form-group">
+                <label>Client Email Address *</label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-envelope"></i>
+                  <input type="email" id="client-email" placeholder="e.g. owner@kolkatarestaurant.com" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Business Name *</label>
+                  <div class="input-with-icon">
+                    <i class="fa-solid fa-shop"></i>
+                    <input type="text" id="business-name" placeholder="e.g. Royal Bengal Biryani House">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Owner / Contact Name</label>
+                  <div class="input-with-icon">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="contact-name" placeholder="e.g. Suman Sir (or leave blank)">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:10px;">
+                <label>Select Pitch Template / Service Offering *</label>
+                <select id="template-select" class="template-select">
+                  <option value="crm_msme">🚀 All-in-One CRM & Website Package (₹299 + ₹15/mo)</option>
+                  <option value="restaurant">🍲 Restaurant Digital Menu & WhatsApp Order System</option>
+                  <option value="attendance">👥 Staff Attendance & Payroll HR App Pitch</option>
+                  <option value="ecommerce">🎧 E-Commerce Online Store & GST Billing Pitch</option>
+                </select>
+              </div>
+
+              <div class="quick-variables">
+                <span>Personalization variables injected dynamically:</span>
+                <div class="tags-wrap">
+                  <code>{{business_name}}</code>
+                  <code>{{contact_name}}</code>
+                  <code>{{demo_link}}</code>
+                  <code>{{pricing}}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Live Preview & Send Action -->
+          <div class="compose-preview-card">
+            <div class="card-header preview-header">
+              <h3><i class="fa-solid fa-eye"></i> 2. Live Email Preview & Editor</h3>
+              <span class="preview-badge"><i class="fa-solid fa-circle text-green"></i> Auto-Personalized</span>
+            </div>
+
+            <div class="preview-body">
+              <div class="preview-field">
+                <label>Subject Line:</label>
+                <input type="text" id="email-subject" class="subject-input" value="Proposal: Custom Software & Website for Royal Bengal Biryani House">
+              </div>
+
+              <div class="preview-field">
+                <label>Email Body (HTML & Plain Text formatted):</label>
+                <textarea id="email-body" class="body-textarea" rows="13"></textarea>
+              </div>
+            </div>
+
+            <div class="preview-footer">
+              <div class="send-mode-switch">
+                <label title="When enabled, sends via your deployed Google Apps Script URL. If no URL is set, opens direct Gmail Mailto.">
+                  <input type="checkbox" id="use-gas-backend" checked>
+                  <span>Use Google Apps Script Backend (Gmail + Sheet Log)</span>
+                </label>
+              </div>
+
+              <div class="action-buttons">
+                <button class="btn-ghost-action" onclick="sendViaMailto()"><i class="fa-solid fa-external-link-alt"></i> Open in Gmail App</button>
+                <button class="btn-send-primary" id="send-btn" onclick="sendEmailNow()"><i class="fa-solid fa-paper-plane"></i> Send via Gmail Backend</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- TAB 2: TEMPLATES -->
+      <section class="tab-pane" id="tab-templates">
+        <div class="banner-box">
+          <div>
+            <h2>High-Converting Outreach Templates</h2>
+            <p>Customize the default wording for your pitches. Variables like <code>{{business_name}}</code> are automatically replaced when you type on the Compose screen.</p>
+          </div>
+        </div>
+
+        <div class="templates-grid" id="templates-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- TAB 3: LOGS -->
+      <section class="tab-pane" id="tab-logs">
+        <div class="banner-box">
+          <div>
+            <h2>Email Dispatch History & Sheet Logs</h2>
+            <p>All emails sent from this portal are recorded below locally and synced to your connected Google Sheet.</p>
+          </div>
+          <button class="btn-clear" onclick="clearLogs()"><i class="fa-solid fa-trash"></i> Clear Local History</button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Client Email</th>
+                  <th>Business Name</th>
+                  <th>Pitch Template</th>
+                  <th>Dispatch Method</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table-body">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: SETUP GUIDE -->
+      <section class="tab-pane" id="tab-setup">
+        <div class="guide-card">
+          <div class="guide-head">
+            <h2><i class="fa-brands fa-google"></i> How to Connect Your Official Gmail & Google Sheet (2-Minute Setup)</h2>
+            <span class="guide-badge">100% Free Google API</span>
+          </div>
+          <div class="guide-content">
+            <p class="intro-p">By setting up a simple **Google Apps Script** inside a Google Sheet, you can send real emails directly from your `YOUR_NAME@gmail.com` account and record every pitch in your spreadsheet without paying for expensive third-party mail tools!</p>
+
+            <div class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-text">
+                <h4>Create a Google Sheet</h4>
+                <p>Open <a href="https://sheets.new" target="_blank" style="color:var(--primary);text-decoration:underline;">sheets.new</a> in your browser and name it <strong>"Siddho CRM Outreach Logs"</strong>. Add 5 headers in row 1: <code>Timestamp | Email | Business Name | Template | Status</code>.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-text">
+                <h4>Open Apps Script Editor</h4>
+                <p>In your Google Sheet menu, click <strong>Extensions → Apps Script</strong>. A new code editor tab will open.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-text">
+                <h4>Paste the Backend Code (`Code.gs`)</h4>
+                <p>Delete any existing code in the editor and copy-paste the exact code from our ready-made `Code.gs` script below:</p>
+                <div class="code-box">
+                  <div class="code-head">
+                    <span>Google Apps Script Backend (Code.gs)</span>
+                    <button onclick="copyGasCode()"><i class="fa-regular fa-copy"></i> Copy Code</button>
+                  </div>
+                  <pre><code id="gas-code-preview">// Click copy button or view Code.gs file in project directory</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-num">4</div>
+              <div class="step-text">
+                <h4>Deploy as Web App</h4>
+                <p>Click the blue <strong>Deploy → New deployment</strong> button at the top right of the Apps Script editor. Click the gear icon next to "Select type" and choose <strong>Web app</strong>.<br>
+                • Set Description: <code>Siddho CRM Email API</code><br>
+                • Set Execute as: <strong>Me (your email)</strong><br>
+                • Set Who has access: <strong>Anyone</strong> (CRITICAL for dashboard communication)<br>
+                Click <strong>Deploy</strong> and authorize permissions.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-num">5</div>
+              <div class="step-text">
+                <h4>Paste Web App URL into This Dashboard</h4>
+                <p>Copy the generated Web App URL (`https://script.google.com/macros/s/.../exec`) and paste it by clicking the <strong>"Configure Backend URL"</strong> button at the top of this dashboard!</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Backend Configuration Modal -->
+  <div class="modal-overlay" id="config-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3><i class="fa-solid fa-gear"></i> Backend API Configuration</h3>
+        <button class="modal-close" onclick="closeConfigModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Google Apps Script Web App URL</label>
+          <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/AKfycbzOGgnfYoUJ8AryzRS8sFCDH_zM8DKZG6IzChYTP8YOIbdwjGHzHgZCCuY_SACK9kI/exec" value="https://script.google.com/macros/s/AKfycbzOGgnfYoUJ8AryzRS8sFCDH_zM8DKZG6IzChYTP8YOIbdwjGHzHgZCCuY_SACK9kI/exec">
+          <small style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;display:block;">Paste your deployed Web App URL from Google Apps Script here. If left empty, the dashboard runs in simulation/mailto mode.</small>
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label>Your Sender Name / Company Sign-off</label>
+          <input type="text" id="sender-name-input" value="Siddhartha (Founder — Siddho CRM)">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeConfigModal()">Cancel</button>
+        <button class="btn-send-primary" onclick="saveConfig()"><i class="fa-solid fa-save"></i> Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

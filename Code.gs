@@ -19,6 +19,18 @@ function doPost(e) {
   try {
     // Parse incoming JSON payload from frontend dashboard
     var payload = JSON.parse(e.postData.contents);
+    
+    // --- Authentication Flow ---
+    if (payload.action === 'verifyPassword') {
+      var actualPass = getSitePassword();
+      if (payload.password === actualPass) {
+        return createJsonResponse({ status: "success", message: "Authenticated" });
+      } else {
+        return createJsonResponse({ status: "error", message: "Incorrect password" });
+      }
+    }
+
+    // --- Existing Email Dispatch Flow ---
     var recipientEmail = payload.recipientEmail;
     var businessName = payload.businessName || "Valued Client";
     var subject = payload.subject || "Software Proposal from Siddho CRM";
@@ -124,4 +136,22 @@ function logToSheet(email, businessName, template, subject, status) {
 function createJsonResponse(dataObject) {
   return ContentService.createTextOutput(JSON.stringify(dataObject))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Retrieve site password from 'Settings' sheet, creating it if it doesn't exist
+ */
+function getSitePassword() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var settingsSheet = ss.getSheetByName("Settings");
+  
+  if (!settingsSheet) {
+    settingsSheet = ss.insertSheet("Settings");
+    settingsSheet.appendRow(["Site Password", "Description"]);
+    settingsSheet.appendRow(["admin123", "Change this password to secure your dashboard."]);
+    settingsSheet.setColumnWidth(1, 200);
+    settingsSheet.setColumnWidth(2, 400);
+  }
+  
+  return settingsSheet.getRange(2, 1).getValue().toString();
 }

@@ -219,10 +219,10 @@ Siddho CRM Support`
 
 // ── State Variables ─────────────────────────────────────────────────────────
 let logsHistory = JSON.parse(localStorage.getItem('siddho_email_logs') || '[]');
-let savedGasUrl = localStorage.getItem('siddho_gas_url') || 'https://script.google.com/macros/s/AKfycbyq1tKv9Yr15rJM2LPmzZltGEzVD7SLDblcGQfq0Ojv8wlxS4nujaRk0L_PsS-kcihP/exec';
+let savedGasUrl = localStorage.getItem('siddho_gas_url') || 'https://script.google.com/macros/s/AKfycbzf0qRaDpoAJZrrNzoHJ9vypPcT8ptbIrj5_6gS8SFOa9g8oYezosznE3AG3G2pJZj1/exec';
 let savedSenderName = localStorage.getItem('siddho_sender_name') || 'Siddho CRM Support';
 let savedSenderEmail = localStorage.getItem('siddho_sender_email') || 'support@siddhocrm.online';
-let currentTheme = localStorage.getItem('siddho_theme') || 'dark';
+let currentTheme = localStorage.getItem('siddho_theme') || 'light';
 
 // ── DOM References ──────────────────────────────────────────────────────────
 const clientEmailEl = document.getElementById('client-email');
@@ -252,26 +252,147 @@ const mobileToggleBtn = document.getElementById('mobile-toggle');
 const sidebarEl = document.getElementById('sidebar');
 const sidebarOverlayEl = document.getElementById('sidebar-overlay');
 
+// ── Authentication System ───────────────────────────────────────────────────
+function initAuth() {
+  const isAuthenticated = localStorage.getItem('siddho_authenticated');
+  const overlay = document.getElementById('auth-overlay');
+  if (isAuthenticated === 'true') {
+    overlay.classList.add('hidden');
+  }
+  
+  // Enter key listeners
+  document.getElementById('auth-password').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') verifySitePassword();
+  });
+  
+  document.getElementById('auth-master-password').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') verifyMasterPassword();
+  });
+}
+
+function toggleForgotPassword() {
+  const mainCard = document.getElementById('auth-card-main');
+  const forgotCard = document.getElementById('auth-card-forgot');
+  
+  if (mainCard.style.display === 'none') {
+    mainCard.style.display = 'block';
+    forgotCard.style.display = 'none';
+  } else {
+    mainCard.style.display = 'none';
+    forgotCard.style.display = 'block';
+  }
+}
+
+async function verifySitePassword() {
+  const passInput = document.getElementById('auth-password');
+  const btn = document.getElementById('auth-submit-btn');
+  const err = document.getElementById('auth-error');
+  const val = passInput.value.trim();
+  
+  if (!val) {
+    err.textContent = 'Please enter a password.';
+    err.style.display = 'block';
+    return;
+  }
+  
+  if (!savedGasUrl || !savedGasUrl.startsWith('http')) {
+    err.textContent = 'Backend API URL not configured! Cannot verify. (Use Master Bypass if locked out)';
+    err.style.display = 'block';
+    return;
+  }
+
+  err.style.display = 'none';
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(savedGasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'verifyPassword', password: val })
+    });
+    
+    const result = await response.json();
+    if (result.status === 'success') {
+      localStorage.setItem('siddho_authenticated', 'true');
+      document.getElementById('auth-overlay').classList.add('hidden');
+      showToast('Authentication successful!');
+    } else {
+      err.textContent = 'Incorrect password. Try again.';
+      err.style.display = 'block';
+    }
+  } catch (error) {
+    err.textContent = 'Connection error. Please try again or use bypass.';
+    err.style.display = 'block';
+  }
+  
+  btn.innerHTML = origText;
+  btn.disabled = false;
+}
+
+function verifyMasterPassword() {
+  const passInput = document.getElementById('auth-master-password');
+  const err = document.getElementById('auth-master-error');
+  const val = passInput.value.trim();
+  
+  if (val === '2323') {
+    localStorage.setItem('siddho_authenticated', 'true');
+    document.getElementById('auth-overlay').classList.add('hidden');
+    showToast('Master Bypass Activated!');
+  } else {
+    err.textContent = 'Invalid Master Password.';
+    err.style.display = 'block';
+  }
+}
+
+function logoutSite() {
+  localStorage.removeItem('siddho_authenticated');
+  const overlay = document.getElementById('auth-overlay');
+  overlay.classList.remove('hidden');
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-master-password').value = '';
+  
+  // Reset view to main login
+  document.getElementById('auth-card-main').style.display = 'block';
+  document.getElementById('auth-card-forgot').style.display = 'none';
+  
+  showToast('Logged out successfully.');
+}
+
 // ── Initialize App ──────────────────────────────────────────────────────────
 function init() {
+  initAuth();
   // Initialize theme
   if (currentTheme === 'light') {
     document.documentElement.setAttribute('data-theme', 'light');
+    if (themeToggleBtn) themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+    const authBtn = document.getElementById('auth-theme-toggle');
+    if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+  } else {
     if (themeToggleBtn) themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    const authBtn = document.getElementById('auth-theme-toggle');
+    if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
   }
 
   // Theme Toggle Listener
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('siddho_theme', currentTheme);
       
       if (currentTheme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
-        themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        localStorage.setItem('siddho_theme', 'light');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        const authBtn = document.getElementById('auth-theme-toggle');
+        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
       } else {
         document.documentElement.removeAttribute('data-theme');
-        themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        localStorage.setItem('siddho_theme', 'dark');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        const authBtn = document.getElementById('auth-theme-toggle');
+        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
       }
     });
   }

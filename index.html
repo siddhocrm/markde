@@ -17,6 +17,45 @@
 
 <body>
 
+  <!-- Auth Overlay -->
+  <div class="auth-overlay" id="auth-overlay">
+    
+    <!-- Auth Theme Toggle -->
+    <button class="theme-toggle auth-theme-btn" id="auth-theme-toggle" title="Toggle Light/Dark Mode" onclick="document.getElementById('theme-toggle').click()">
+      <i class="fa-solid fa-moon"></i>
+    </button>
+
+    <div class="auth-card" id="auth-card-main">
+      <div class="auth-brand">
+        <span class="brand-name">Siddho<span>Mail</span></span>
+      </div>
+      <h2><i class="fa-solid fa-lock"></i> <span class="text-gradient">Secured Dashboard</span></h2>
+      <p>Please enter the site password to access the Siddho CRM Outreach portal.</p>
+      <div class="auth-input-wrapper">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="auth-password" class="auth-input" placeholder="Enter password...">
+      </div>
+      <button class="btn-primary" onclick="verifySitePassword()" id="auth-submit-btn" style="width: 100%; margin-top:20px; padding: 12px; font-size: 1rem;"><i class="fa-solid fa-right-to-bracket"></i> Access Site</button>
+      <button class="btn-clear" onclick="toggleForgotPassword()" style="width:100%; justify-content:center; margin-top:12px;">Forgot Password?</button>
+      <div id="auth-error" class="auth-error-msg" style="display: none;"></div>
+    </div>
+    
+    <div class="auth-card" id="auth-card-forgot" style="display: none;">
+      <div class="auth-brand">
+        <span class="brand-name">Siddho<span>Mail</span></span>
+      </div>
+      <h2><i class="fa-solid fa-key" style="color:var(--yellow);"></i> <span class="text-gradient" style="background: linear-gradient(135deg, var(--yellow), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Master Bypass</span></h2>
+      <p>Enter the emergency master password to bypass sheet authentication.</p>
+      <div class="auth-input-wrapper">
+        <i class="fa-solid fa-key"></i>
+        <input type="password" id="auth-master-password" class="auth-input" placeholder="Master Password...">
+      </div>
+      <button class="btn-primary" onclick="verifyMasterPassword()" style="width: 100%; margin-top:20px; padding: 12px; font-size: 1rem; background-color: var(--yellow); color: #000;"><i class="fa-solid fa-unlock-keyhole"></i> Bypass Login</button>
+      <button class="btn-clear" onclick="toggleForgotPassword()" style="width:100%; justify-content:center; margin-top:12px;">Back to Standard Login</button>
+      <div id="auth-master-error" class="auth-error-msg" style="display: none;"></div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div class="toast" id="toast">
     <i class="fa-solid fa-circle-check"></i>
@@ -82,6 +121,7 @@
           </div>
         </div>
         <div class="bar-right" style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn-clear" onclick="logoutSite()" style="color:#ef4444; border-color:#ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
           <button class="theme-toggle" id="theme-toggle" title="Toggle Light/Dark Mode">
             <i class="fa-solid fa-moon"></i>
           </button>
@@ -370,8 +410,8 @@
         <div class="form-group">
           <label>Google Apps Script Web App URL</label>
           <input type="url" id="gas-url-input"
-            placeholder="https://script.google.com/macros/s/AKfycbyq1tKv9Yr15rJM2LPmzZltGEzVD7SLDblcGQfq0Ojv8wlxS4nujaRk0L_PsS-kcihP/exec"
-            value="https://script.google.com/macros/s/AKfycbyq1tKv9Yr15rJM2LPmzZltGEzVD7SLDblcGQfq0Ojv8wlxS4nujaRk0L_PsS-kcihP/exec">
+            placeholder="https://script.google.com/macros/s/AKfycbzf0qRaDpoAJZrrNzoHJ9vypPcT8ptbIrj5_6gS8SFOa9g8oYezosznE3AG3G2pJZj1/exec"
+            value="https://script.google.com/macros/s/AKfycbzf0qRaDpoAJZrrNzoHJ9vypPcT8ptbIrj5_6gS8SFOa9g8oYezosznE3AG3G2pJZj1/exec">
           <small style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;display:block;">Paste your deployed Web
             App URL from Google Apps Script here. If left empty, the dashboard runs in simulation/mailto mode.</small>
         </div>

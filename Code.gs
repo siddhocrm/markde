@@ -25,6 +25,7 @@ function doPost(e) {
     var messageBody = payload.messageBody || "";
     var templateKey = payload.templateKey || "Custom";
     var senderSignOff = payload.senderSignOff || "Siddho CRM Team";
+    var senderEmail = payload.senderEmail || "";
 
     if (!recipientEmail || !messageBody) {
       return createJsonResponse({
@@ -38,11 +39,17 @@ function doPost(e) {
                    '<br><br><hr style="border:none;border-top:1px solid #eee;margin:20px 0;">' +
                    '<p style="color:#666;font-size:12px;">Sent via official Gmail integration · Powered by <strong>Siddho CRM</strong></p>';
 
-    // Send email via official Gmail account of the script owner
-    GmailApp.sendEmail(recipientEmail, subject, messageBody, {
+    var emailOptions = {
       htmlBody: htmlBody,
       name: senderSignOff
-    });
+    };
+
+    if (senderEmail) {
+      emailOptions.from = senderEmail;
+    }
+
+    // Send email via official Gmail account of the script owner (or alias)
+    GmailApp.sendEmail(recipientEmail, subject, messageBody, emailOptions);
 
     // Log this transaction into the active Google Sheet
     logToSheet(recipientEmail, businessName, templateKey, subject, "SENT VIA GMAIL");
@@ -64,11 +71,34 @@ function doPost(e) {
  * Handle GET requests (e.g. status check or testing URL directly in browser)
  */
 function doGet(e) {
-  return createJsonResponse({
-    status: "online",
-    service: "Siddho CRM Email & Outreach Backend",
-    timestamp: new Date().toISOString()
-  });
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheets()[0];
+    var data = sheet.getDataRange().getValues();
+    
+    var rows = [];
+    if (data.length > 1) {
+      var headers = data[0];
+      for (var i = 1; i < data.length; i++) {
+        var obj = {};
+        for (var j = 0; j < headers.length; j++) {
+          obj[headers[j]] = data[i][j];
+        }
+        rows.push(obj);
+      }
+    }
+    
+    return createJsonResponse({
+      status: "success",
+      data: rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    return createJsonResponse({
+      status: "error",
+      message: err.toString()
+    });
+  }
 }
 
 /**

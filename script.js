@@ -117,7 +117,7 @@ Siddho CRM`
 
 // ── State Variables ─────────────────────────────────────────────────────────
 let logsHistory = JSON.parse(localStorage.getItem('siddho_email_logs') || '[]');
-let savedGasUrl = localStorage.getItem('siddho_gas_url') || 'https://script.google.com/macros/s/AKfycbzOGgnfYoUJ8AryzRS8sFCDH_zM8DKZG6IzChYTP8YOIbdwjGHzHgZCCuY_SACK9kI/exec';
+let savedGasUrl = localStorage.getItem('siddho_gas_url') || 'https://script.google.com/macros/s/AKfycbxptzrGRMB0ZidL0ufQ3daEUG47wuIWrQuKbp0qdTraK7kOu3WqPP4g7c4aHjssuwzL/exec';
 let savedSenderName = localStorage.getItem('siddho_sender_name') || 'Siddhartha (Founder — Siddho CRM)';
 
 // ── DOM References ──────────────────────────────────────────────────────────
